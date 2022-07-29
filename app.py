@@ -77,14 +77,14 @@ def cleanup():
             delete_at = parse_delete_at(status)
 
             if utcnow >= delete_at:
-                print(f'Delete: {status.id} {get_plain_content(status)}')
+                print(f'Delete: {status.id} {delete_at}')
                 try:
                     api.status_delete(api.status(status.in_reply_to_id))
                 except MastodonNotFoundError:
                     pass
                 api.status_delete(status)
             else:
-                print(f'Skip: {status.id} {get_plain_content(status)} {delete_at}')
+                print(f'Skip: {status.id} for {delete_at}')
 
         statuses = api.fetch_next(statuses)
 
