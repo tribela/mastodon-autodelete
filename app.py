@@ -19,24 +19,30 @@ me = api.account_verify_credentials()
 
 def get_plain_content(status):
     doc = html.fromstring(status.content)
-    for link in doc.xpath('//a'):
-        link.drop_tree()
     for p in doc.xpath('//p'):
         p.tail = '\n\n' + (p.tail or '')
     for br in doc.xpath('//br'):
-        br.content = '\n'
+        br.text = '\n'
 
     return doc.text_content().strip()
 
 
 def parse_delete_at(status):
-    pattern_absolute = re.compile(r'^(?:(?P<ayear>\d+)-)?(?P<amonth>\d+)-(?P<adate>\d+)(?: (?P<ahour>\d+):(?P<aminute>\d+)(?::(?P<asecond>\d+))?)?$')
-    pattern_relative = re.compile(r'^(?:(?P<ryear>\d+)y)?(?:(?P<rmonth>\d+)m)?(?:(?P<rdate>\d+)d)?(?: ?)(?:(?P<rhour>\d+)h)?(?:(?P<rminute>\d+)m)?(?:(?P<rsecond>\d+)s)?$')
+    pattern_absolute = re.compile(
+        rf'^#{DELETE_TAG} '
+        r'(?:(?P<ayear>\d+)-)?(?P<amonth>\d+)-(?P<adate>\d+)'
+        r'(?: (?P<ahour>\d+):(?P<aminute>\d+)(?::(?P<asecond>\d+))?)?$',
+        re.M)
+    pattern_relative = re.compile(
+        rf'^#{DELETE_TAG} '
+        r'(?:(?P<ryear>\d+)y)?(?:(?P<rmonth>\d+)m)?(?:(?P<rdate>\d+)d)?'
+        r'(?: ?)(?:(?P<rhour>\d+)h)?(?:(?P<rminute>\d+)m)?(?:(?P<rsecond>\d+)s)?$',
+        re.M)
 
     content = get_plain_content(status)
     created_at = status.created_at
 
-    if matched := pattern_absolute.match(content):
+    if matched := pattern_absolute.search(content):
         delete_at = datetime.datetime(
             int(matched.group('ayear') or status.created_at.year),
             int(matched.group('amonth')),
@@ -47,7 +53,7 @@ def parse_delete_at(status):
         ).astimezone(created_at.tzinfo)
         if delete_at < status.created_at:
             delete_at = delete_at.replace(year=delete_at.year + 1)
-    elif (matched := pattern_relative.match(content)) and matched.lastgroup is not None:
+    elif (matched := pattern_relative.search(content)) and matched.lastgroup is not None:
         delta = relativedelta(
             year=int(matched.group('ryear') or 0),
             months=int(matched.group('rmonth') or 0),
@@ -78,11 +84,11 @@ def cleanup():
                     pass
                 api.status_delete(status)
             else:
-                print(f'Skip: {status.id} {get_plain_content(status)}')
+                print(f'Skip: {status.id} {get_plain_content(status)} {delete_at}')
 
         statuses = api.fetch_next(statuses)
 
 
 while True:
     cleanup()
-    time.sleep(5 * 60)
+    time.sleep(1 * 60)
