@@ -3,6 +3,7 @@ import os
 import re
 import time
 
+import dateutil
 from dateutil.relativedelta import relativedelta
 
 import pytz
@@ -41,18 +42,22 @@ def parse_delete_at(status):
         re.M)
 
     content = get_plain_content(status)
-    created_at = status.created_at.astimezone(LOCAL_TIMEZONE)
+    if status.edited_at:
+        last_updated_at = dateutil.parser.parse(status.edited_at)
+    else:
+        last_updated_at = status.created_at
+    last_updated_at = last_updated_at.astimezone(LOCAL_TIMEZONE)
 
     if matched := pattern_absolute.search(content):
         delete_at = datetime.datetime(
-            int(matched.group('ayear') or created_at.year),
-            int(matched.group('amonth') or created_at.month),
-            int(matched.group('adate') or created_at.day),
-            int(matched.group('ahour') or created_at.hour),
-            int(matched.group('aminute') or created_at.minute),
+            int(matched.group('ayear') or last_updated_at.year),
+            int(matched.group('amonth') or last_updated_at.month),
+            int(matched.group('adate') or last_updated_at.day),
+            int(matched.group('ahour') or last_updated_at.hour),
+            int(matched.group('aminute') or last_updated_at.minute),
             int(matched.group('asecond') or 0),
         ).astimezone(LOCAL_TIMEZONE)
-        if delete_at < created_at:
+        if delete_at < last_updated_at:
             if not matched.group('adate'):  # Only hours
                 delete_at = delete_at.replace(day=delete_at.day + 1)
             else:  # Date given
@@ -67,9 +72,9 @@ def parse_delete_at(status):
             minutes=int(matched.group('rminute') or 0),
             seconds=int(matched.group('rsecond') or 0),
         )
-        delete_at = status.created_at + delta
+        delete_at = last_updated_at + delta
     else:
-        delete_at = status.created_at + relativedelta(days=1)
+        delete_at = last_updated_at + relativedelta(days=1)
 
     return delete_at
 
