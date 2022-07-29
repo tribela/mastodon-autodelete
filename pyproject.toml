@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "mastodon-cleanup"
+name = "mastodon-autodelete"
 version = "0.1.0"
-description = "Automatically delete tagged posts"
+description = "Automatically delete tagged posts after some timeperiod"
 authors = ["'Jeong Arm' <'kjwonmail@gmail.com'>"]
 license = "MIT"
 
