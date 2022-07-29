@@ -64,7 +64,7 @@ def parse_delete_at(status):
 
 
 def cleanup():
-    utcnow = datetime.datetime.utcnow().astimezone(pytz.utc)
+    utcnow = datetime.datetime.now().astimezone(pytz.utc)
     statuses = api.account_statuses(me.id, tagged=DELETE_TAG, limit=100)
     while statuses:
         for status in statuses:
