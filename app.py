@@ -12,6 +12,7 @@ from lxml import html
 ACCESS_TOKEN = os.getenv('MASTODON_ACCESS_TOKEN')
 MASTODON_HOST = os.getenv('MASTODON_HOST')
 DELETE_TAG = 'deleteit'
+LOCAL_TIMEZONE = pytz.timezone('Asia/Seoul')
 
 api = Mastodon(api_base_url=MASTODON_HOST, access_token=ACCESS_TOKEN)
 me = api.account_verify_credentials()
@@ -40,7 +41,7 @@ def parse_delete_at(status):
         re.M)
 
     content = get_plain_content(status)
-    created_at = status.created_at
+    created_at = status.created_at.astimezone(LOCAL_TIMEZONE)
 
     if matched := pattern_absolute.search(content):
         delete_at = datetime.datetime(
@@ -50,12 +51,13 @@ def parse_delete_at(status):
             int(matched.group('ahour') or created_at.hour),
             int(matched.group('aminute') or created_at.minute),
             int(matched.group('asecond') or 0),
-        ).replace(tzinfo=created_at.tzinfo)
-        if delete_at < status.created_at:
-            if not matched.group('adate'):
-                delete_at = delete_at.replace(day=created_at.day + 1)
-            else:
+        ).astimezone(LOCAL_TIMEZONE)
+        if delete_at < created_at:
+            if not matched.group('adate'):  # Only hours
+                delete_at = delete_at.replace(day=delete_at.day + 1)
+            else:  # Date given
                 delete_at = delete_at.replace(year=delete_at.year + 1)
+
     elif (matched := pattern_relative.search(content)) and matched.lastgroup is not None:
         delta = relativedelta(
             year=int(matched.group('ryear') or 0),
@@ -73,7 +75,7 @@ def parse_delete_at(status):
 
 
 def cleanup():
-    utcnow = datetime.datetime.now().astimezone(pytz.utc)
+    utcnow = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
     statuses = api.account_statuses(me.id, tagged=DELETE_TAG, limit=100)
     while statuses:
         for status in statuses:
