@@ -30,8 +30,8 @@ def get_plain_content(status):
 def parse_delete_at(status):
     pattern_absolute = re.compile(
         rf'^#{DELETE_TAG} '
-        r'(?:(?P<ayear>\d+)-)?(?P<amonth>\d+)-(?P<adate>\d+)'
-        r'(?: (?P<ahour>\d+):(?P<aminute>\d+)(?::(?P<asecond>\d+))?)?$',
+        r'(?:(?:(?P<ayear>\d+)-)?(?P<amonth>\d+)-(?P<adate>\d+))?'
+        r'(?:(?:\b| )(?P<ahour>\d+):(?P<aminute>\d+)(?::(?P<asecond>\d+))?)?$',
         re.M)
     pattern_relative = re.compile(
         rf'^#{DELETE_TAG} '
@@ -44,15 +44,18 @@ def parse_delete_at(status):
 
     if matched := pattern_absolute.search(content):
         delete_at = datetime.datetime(
-            int(matched.group('ayear') or status.created_at.year),
-            int(matched.group('amonth')),
-            int(matched.group('adate')),
+            int(matched.group('ayear') or created_at.year),
+            int(matched.group('amonth') or created_at.month),
+            int(matched.group('adate') or created_at.day),
             int(matched.group('ahour') or created_at.hour),
             int(matched.group('aminute') or created_at.minute),
             int(matched.group('asecond') or 0),
         ).astimezone(created_at.tzinfo)
         if delete_at < status.created_at:
-            delete_at = delete_at.replace(year=delete_at.year + 1)
+            if not matched.group('adate'):
+                delete_at = delete_at.replace(day=created_at.day + 1)
+            else:
+                delete_at = delete_at.replace(year=delete_at.year + 1)
     elif (matched := pattern_relative.search(content)) and matched.lastgroup is not None:
         delta = relativedelta(
             year=int(matched.group('ryear') or 0),
