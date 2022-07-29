@@ -46,7 +46,7 @@ def parse_delete_at(status):
             int(matched.group('asecond') or 0),
         ).astimezone(created_at.tzinfo)
         if delete_at < status.created_at:
-            delete_at.replace(year=delete_at.year + 1)
+            delete_at = delete_at.replace(year=delete_at.year + 1)
     elif (matched := pattern_relative.match(content)) and matched.lastgroup is not None:
         delta = relativedelta(
             year=int(matched.group('ryear') or 0),
