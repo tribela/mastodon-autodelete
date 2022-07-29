@@ -50,7 +50,7 @@ def parse_delete_at(status):
             int(matched.group('ahour') or created_at.hour),
             int(matched.group('aminute') or created_at.minute),
             int(matched.group('asecond') or 0),
-        ).astimezone(created_at.tzinfo)
+        ).replace(tzinfo=created_at.tzinfo)
         if delete_at < status.created_at:
             if not matched.group('adate'):
                 delete_at = delete_at.replace(day=created_at.day + 1)
