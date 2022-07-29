@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "mastodon-cleanup"
+version = "0.1.0"
+description = "Automatically delete tagged posts"
+authors = ["'Jeong Arm' <'kjwonmail@gmail.com'>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+"mastodon.py" = {git = "https://github.com/halcy/mastodon.py", rev = "7f23466"}
+lxml = "^4.9.1"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
