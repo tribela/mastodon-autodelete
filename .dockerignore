@@ -1,0 +1,6 @@
+.env
+.envrc
+.git
+.flake8
+Dockerfile
+.dockerignore
