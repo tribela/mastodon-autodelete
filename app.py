@@ -23,6 +23,8 @@ logger = logging.getLogger('App')
 api = Mastodon(api_base_url=MASTODON_HOST, access_token=ACCESS_TOKEN)
 me = api.account_verify_credentials()
 
+logger.info(f'I am {me.username}')
+
 
 def get_plain_content(status):
     doc = html.fromstring(status.content)
