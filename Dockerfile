@@ -9,8 +9,8 @@ run --mount=type=cache,target=/root/.cache \
 run poetry config virtualenvs.create false
 copy pyproject.toml poetry.lock ./
 run --mount=type=cache,target=/root/.cache \
-    poetry install --no-dev --no-interaction && \
-    pip install git+https://github.com/halcy/mastodon.py@7f23466
+    pip install git+https://github.com/halcy/mastodon.py@7f23466 && \
+    poetry install --no-dev --no-interaction
 copy . ./
 
 CMD ["python", "app.py"]
