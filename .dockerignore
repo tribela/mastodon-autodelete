@@ -1,6 +1,7 @@
 .env
 .envrc
 .git
+.gitignore
 .flake8
 Dockerfile
 .dockerignore
