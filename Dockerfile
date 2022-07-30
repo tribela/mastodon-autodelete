@@ -1,6 +1,7 @@
 from python:3.8
 
 ENV PYTHON_UNBUFFERED 1
+ENV TZ=Asia/Seoul
 
 workdir app
 run --mount=type=cache,target=/root/.cache \
