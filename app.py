@@ -1,9 +1,11 @@
 import datetime
+import logging
+import logging.config
 import os
 import re
 import time
 
-import dateutil
+import dateutil.parser
 from dateutil.relativedelta import relativedelta
 
 import pytz
@@ -14,6 +16,9 @@ ACCESS_TOKEN = os.getenv('MASTODON_ACCESS_TOKEN')
 MASTODON_HOST = os.getenv('MASTODON_HOST')
 DELETE_TAG = 'deleteit'
 LOCAL_TIMEZONE = pytz.timezone('Asia/Seoul')
+
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('App')
 
 api = Mastodon(api_base_url=MASTODON_HOST, access_token=ACCESS_TOKEN)
 me = api.account_verify_credentials()
@@ -49,6 +54,7 @@ def parse_delete_at(status):
     last_updated_at = last_updated_at.astimezone(LOCAL_TIMEZONE)
 
     if matched := pattern_absolute.search(content):
+        logger.debug('Using absolute pattern')
         delete_at = datetime.datetime(
             int(matched.group('ayear') or last_updated_at.year),
             int(matched.group('amonth') or last_updated_at.month),
@@ -64,6 +70,7 @@ def parse_delete_at(status):
                 delete_at = delete_at.replace(year=delete_at.year + 1)
 
     elif (matched := pattern_relative.search(content)) and matched.lastgroup is not None:
+        logger.debug('Using relative pattern')
         delta = relativedelta(
             year=int(matched.group('ryear') or 0),
             months=int(matched.group('rmonth') or 0),
@@ -74,6 +81,7 @@ def parse_delete_at(status):
         )
         delete_at = last_updated_at + delta
     else:
+        logger.debug('Using default pattern')
         delete_at = last_updated_at + relativedelta(days=1)
 
     return delete_at
@@ -87,18 +95,20 @@ def cleanup():
             delete_at = parse_delete_at(status)
 
             if utcnow >= delete_at:
-                print(f'Delete: {status.id} {delete_at}')
+                logger.info(f'Delete: {status.id} {delete_at}')
                 try:
                     api.status_delete(api.status(status.in_reply_to_id))
                 except MastodonNotFoundError:
                     pass
                 api.status_delete(status)
             else:
-                print(f'Skip: {status.id} for {delete_at}')
+                logger.debug(f'Skip: {status.id} for {delete_at}')
 
+        logger.debug('Fetch next page')
         statuses = api.fetch_next(statuses)
 
 
 while True:
+    logger.debug('Start cleanup')
     cleanup()
     time.sleep(1 * 60)
