@@ -5,6 +5,8 @@ import os
 import re
 import time
 
+from typing import Tuple
+
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
 
@@ -36,7 +38,14 @@ def get_plain_content(status):
     return doc.text_content().strip()
 
 
-def parse_delete_at(status):
+def parse_command(status) -> Tuple[datetime.datetime, bool]:
+    """
+    Parse command from status.content
+    :param status:
+    :return: datetime.datetime: delete_at
+    :return: bool: is_tagging_reply
+    """
+
     pattern_absolute = re.compile(
         rf'^#{DELETE_TAG} '
         r'(?:(?:(?P<ayear>\d+)-)?(?P<amonth>\d+)-(?P<adate>\d+))?'
@@ -70,6 +79,7 @@ def parse_delete_at(status):
                 delete_at = delete_at.replace(day=delete_at.day + 1)
             else:  # Date given
                 delete_at = delete_at.replace(year=delete_at.year + 1)
+        is_tagging_reply = matched.re.sub('', matched.string).strip() == ''
 
     elif (matched := pattern_relative.search(content)) and matched.lastgroup is not None:
         logger.debug('Using relative pattern')
@@ -84,11 +94,13 @@ def parse_delete_at(status):
             seconds=int(matched.group('rsecond') or 0),
         )
         delete_at = last_updated_at + delta
+        is_tagging_reply = matched.re.sub('', matched.string).strip() == ''
     else:
         logger.debug('Using default pattern')
         delete_at = last_updated_at + relativedelta(days=1)
+        is_tagging_reply = content.replace(f'#{DELETE_TAG}', '').strip() == ''
 
-    return delete_at
+    return delete_at, is_tagging_reply
 
 
 def cleanup():
@@ -96,14 +108,19 @@ def cleanup():
     statuses = api.account_statuses(me.id, tagged=DELETE_TAG, limit=100)
     while statuses:
         for status in statuses:
-            delete_at = parse_delete_at(status)
+            delete_at, is_tagging_reply = parse_command(status)
 
             if utcnow >= delete_at:
+                if is_tagging_reply:
+                    # Remove original status that is replied by this status
+                    orig_status = api.status(status.in_reply_to_id)
+                    logger.info(f'Delete: {orig_status.id}')
+                    try:
+                        api.status_delete(orig_status)
+                    except MastodonNotFoundError:
+                        pass
+                # Whether or not, delete this status
                 logger.info(f'Delete: {status.id} {delete_at}')
-                try:
-                    api.status_delete(api.status(status.in_reply_to_id))
-                except MastodonNotFoundError:
-                    pass
                 api.status_delete(status)
             else:
                 logger.debug(f'Skip: {status.id} for {delete_at}')
