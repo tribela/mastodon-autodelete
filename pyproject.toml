@@ -9,6 +9,8 @@ license = "MIT"
 python = "^3.8"
 "mastodon.py" = {git = "https://github.com/halcy/mastodon.py", rev = "7f23466"}
 lxml = "^4.9.1"
+python-dateutil = "^2.8.2"
+pytz = "^2022.1"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
