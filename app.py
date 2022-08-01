@@ -44,7 +44,7 @@ def parse_delete_at(status):
         re.M)
     pattern_relative = re.compile(
         rf'^#{DELETE_TAG} '
-        r'(?:(?P<ryear>\d+)y)?(?:(?P<rmonth>\d+)m)?(?:(?P<rdate>\d+)d)?'
+        r'(?:(?P<ryear>\d+)y)?(?:(?P<rmonth>\d+)m)?(?:(?P<rweek>\d+)w)?(?:(?P<rdate>\d+)d)?'
         r'(?: ?)(?:(?P<rhour>\d+)h)?(?:(?P<rminute>\d+)m)?(?:(?P<rsecond>\d+)s)?$',
         re.M)
 
@@ -76,7 +76,9 @@ def parse_delete_at(status):
         delta = relativedelta(
             year=int(matched.group('ryear') or 0),
             months=int(matched.group('rmonth') or 0),
-            days=int(matched.group('rdate') or 0),
+            days=(
+                int(matched.group('rweek') or 0) * 7 +
+                int(matched.group('rdate') or 0)),
             hours=int(matched.group('rhour') or 0),
             minutes=int(matched.group('rminute') or 0),
             seconds=int(matched.group('rsecond') or 0),
