@@ -11,7 +11,8 @@ import dateutil.parser
 from dateutil.relativedelta import relativedelta
 
 import pytz
-from mastodon import Mastodon, MastodonNotFoundError
+import requests
+from mastodon import Mastodon, MastodonNetworkError, MastodonNotFoundError
 from lxml import html
 
 ACCESS_TOKEN = os.getenv('MASTODON_ACCESS_TOKEN')
@@ -131,5 +132,10 @@ def cleanup():
 
 while True:
     logger.debug('Start cleanup')
-    cleanup()
+    try:
+        cleanup()
+    except (
+            MastodonNetworkError,
+            requests.ConnectionError):
+        pass
     time.sleep(1 * 60)
