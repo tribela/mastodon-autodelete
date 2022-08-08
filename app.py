@@ -12,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 
 import pytz
 import requests
-from mastodon import Mastodon, MastodonNetworkError, MastodonNotFoundError
+from mastodon import Mastodon, MastodonAPIError, MastodonNetworkError, MastodonNotFoundError
 from lxml import html
 
 ACCESS_TOKEN = os.getenv('MASTODON_ACCESS_TOKEN')
@@ -138,4 +138,6 @@ while True:
             MastodonNetworkError,
             requests.ConnectionError):
         pass
+    except MastodonAPIError as e:
+        logger.error(e)
     time.sleep(1 * 60)
