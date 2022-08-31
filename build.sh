@@ -10,4 +10,4 @@ cd "$build_path" || exit 1
 git reset --
 git checkout .
 git clean -fdx
-docker buildx build --pull -t "kjwon15/mastodon-autodelete" . "$@"
+docker buildx build --cache-from "kjwon15/mastodon-autodelete:buildcache" --cache-to "kjwon15/mastodon-autodelete:buildcache" --pull -t "kjwon15/mastodon-autodelete" . "$@"
