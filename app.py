@@ -114,9 +114,9 @@ def cleanup():
             if utcnow >= delete_at:
                 if is_tagging_reply:
                     # Remove original status that is replied by this status
-                    orig_status = api.status(status.in_reply_to_id)
-                    logger.info(f'Delete: {orig_status.id}')
                     try:
+                        orig_status = api.status(status.in_reply_to_id)
+                        logger.info(f'Delete: {orig_status.id}')
                         api.status_delete(orig_status)
                     except MastodonNotFoundError:
                         pass
