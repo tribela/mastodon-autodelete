@@ -54,7 +54,7 @@ def parse_command(status) -> Tuple[datetime.datetime, bool]:
         re.M)
     pattern_relative = re.compile(
         rf'^#{DELETE_TAG} '
-        r'(?:(?P<ryear>\d+)y)?(?:(?P<rmonth>\d+)m){0,1}?(?:(?P<rweek>\d+)w)?(?:(?P<rdate>\d+)d)?'
+        r'(?:(?P<ryear>\d+)y)?(?:(?P<rmonth>\d+)mo){0,1}?(?:(?P<rweek>\d+)w)?(?:(?P<rdate>\d+)d)?'
         r'(?: ?)(?:(?P<rhour>\d+)h)?(?:(?P<rminute>\d+)m)?(?:(?P<rsecond>\d+)s)?$',
         re.M)
 
